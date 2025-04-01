@@ -54,7 +54,12 @@
             padding: 1rem;
             text-align: center;
         }
-
+        .pdfArea {
+            width: 794px;       /* A4 width at 96dpi */
+            height: 1123px;     /* A4 height at 96dpi */
+            overflow: hidden;
+            position: relative;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -168,7 +173,6 @@
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
             };
             window.scrollTo(0, 0); // ensure top
             html2pdf().set(opt).from(element).save();
