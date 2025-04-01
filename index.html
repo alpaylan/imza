@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>İmza Belgesi Oluşturucu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <style>
+    html, body { scroll-behavior: auto; }
+    body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; background: #f9f9f9; }
+    h1 { text-align: center; }
+    label { display: block; margin-top: 1rem; }
+    input { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
+    button { margin-top: 1.5rem; padding: 0.75rem 1.5rem; font-size: 1rem; cursor: pointer; }
+    .document-wrapper { background: white; padding: 1rem; }
+    .document {  padding: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #000; padding: 0.5rem; text-align: left; }
+    td { height: 15px;}
+    p { text-align: center; }
+    .signature { font-family: 'Pacifico', cursive; }
+  </style>
+</head>
+<body>
+  <h1>İmza Belgesi Oluşturucu</h1>
+  <label>Ad Soyad:
+    <input type="text" id="fullName" placeholder="Adınızı ve Soyadınızı girin">
+  </label>
+  <label>Telefon (İsteğe bağlı):
+    <input type="text" id="phone" placeholder="Telefon numarası (opsiyonel)">
+  </label>
+  <button onclick="generateDocument()">Belgeyi Oluştur</button>
+  <button onclick="downloadPDF()" style="display:none" id="downloadBtn">PDF İndir</button>
+
+  <div class="document-wrapper" id="pdfArea" style="display:none">
+    <div class="document" id="output">
+      <p>
+        Ben yüreği Cumhuriyetten, demokrasiden ve adaletten yana atan on milyonlarca vatanseverden biriyim.<br><br>
+        Ben milli iradeyim!<br><br>
+        23 Mart’ta Cumhuriyet Halk Partisi’nin gerçekleştirdiği ön seçimde 15,5 milyon vatandaş Ekrem İmamoğlu’nu Cumhurbaşkanı adayı olarak belirledi.<br><br>
+        Milyonların iradesiyle Cumhurbaşkanı Adayı olan Ekrem İmamoğlu hukuka, akla ve vicdana aykırı bir şekilde siyasi bir kararla hapiste tutuluyor.<br><br>
+        Ülkemin gelecek güzel günlerine inanmaktan bir an olsun vazgeçmedim.<br><br>
+        Ekrem İmamoğlu’nun özgürlüğüne kavuşmasını; demokratik, adil ve mertçe bir yarışın olacağı seçim sandığının bir an önce kurulmasını istiyorum.<br><br>
+        Bu adaletsiz ve hukuksuz düzen artık son bulsun istiyorum.<br><br>
+        Adayımı yanımda, sandığı önümde görmek için imza veriyorum.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Ad - Soyad</th>
+            <th>İmza</th>
+            <th>Telefon (İsteğe bağlı)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+      </table>
+      <br><br><br><br><br><br><br><br>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    function generateDocument() {
+      const name = document.getElementById('fullName').value;
+      const phone = document.getElementById('phone').value;
+      const tbody = document.getElementById('tableBody');
+
+      tbody.innerHTML = ''; // clear before filling
+      const row = document.createElement('tr');
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = name;
+
+      const signatureCell = document.createElement('td');
+      signatureCell.className = 'signature';
+      signatureCell.textContent = name;
+
+      const phoneCell = document.createElement('td');
+      phoneCell.textContent = phone;
+
+      row.appendChild(nameCell);
+      row.appendChild(signatureCell);
+      row.appendChild(phoneCell);
+
+      tbody.appendChild(row);
+
+      for(let i = 0; i < 10; i++) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = '<td></td><td></td><td></td>';
+        tbody.appendChild(emptyRow);
+      }
+
+      document.getElementById('pdfArea').style.display = 'block';
+      document.getElementById('downloadBtn').style.display = 'inline-block';
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById('pdfArea');
+      const opt = {
+        margin:       0.5,
+        filename:     'imza-belgesi.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+      window.scrollTo(0, 0); // ensure top
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
+</body>
+</html>
