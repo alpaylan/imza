@@ -32,7 +32,8 @@
         }
 
         input,
-        button {
+        button,
+        select {
             width: 100%;
             padding: 0.75rem;
             margin-top: 0.5rem;
@@ -76,6 +77,9 @@
             padding: 0.5rem;
             text-align: left;
         }
+        td {
+            height: 15px;
+        }
 
         .signature {
             font-family: 'Pacifico', cursive;
@@ -99,12 +103,19 @@
     <label>Telefon (İsteğe bağlı):
         <input type="text" id="phone" placeholder="Telefon numarası (opsiyonel)">
     </label>
-    <label>İmzanızı çizin:</label>
-    <canvas id="signatureCanvas"></canvas>
-    <button onclick="clearSignature()">İmzayı Temizle</button>
+    <label>İmza Türü:</label>
+    <select id="signatureMode">
+        <option value="auto">Otomatik (Yazı Tipiyle)</option>
+        <option value="draw">Çizim (Elle)</option>
+    </select>
+    <div style="display:none" id="signatureModeInfo">
+        <p>İmzanızı çizmek için fareyi veya parmağınızı kullanın.</p>
+        <canvas id="signatureCanvas"></canvas>
+        <button onclick="clearSignature()">İmzayı Temizle</button>
+    </div>
+
     <button onclick="generateDocument()">Belgeyi Oluştur</button>
     <button onclick="downloadPDF()" style="display:none" id="downloadBtn">PDF İndir</button>
-
     <div class="document-wrapper" id="pdfArea" style="display:none">
         <div class="document" id="output">
             <div>
@@ -169,6 +180,7 @@
         }
 
         function start(e) {
+            console.log('start');
             drawing = true;
             const { x, y } = getXY(e);
             ctx.beginPath();
@@ -176,6 +188,7 @@
         }
 
         function end() {
+            console.log('end');
             drawing = false;
         }
 
@@ -194,21 +207,27 @@
         function generateDocument() {
             const name = document.getElementById('fullName').value;
             const phone = document.getElementById('phone').value;
+            const mode = document.getElementById('signatureMode').value;
             const tbody = document.getElementById('tableBody');
-            const signatureDataURL = canvas.toDataURL();
 
-            tbody.innerHTML = ''; // clear before filling
+            tbody.innerHTML = '';
             const row = document.createElement('tr');
 
             const nameCell = document.createElement('td');
             nameCell.textContent = name;
 
             const signatureCell = document.createElement('td');
-            const img = document.createElement('img');
-            img.src = signatureDataURL;
-            img.style.maxHeight = '60px';
-            img.style.maxWidth = '100%';
-            signatureCell.appendChild(img);
+            if (mode === 'draw') {
+                const signatureDataURL = canvas.toDataURL();
+                const img = document.createElement('img');
+                img.src = signatureDataURL;
+                img.style.maxHeight = '60px';
+                img.style.maxWidth = '100%';
+                signatureCell.appendChild(img);
+            } else {
+                signatureCell.textContent = name;
+                signatureCell.className = 'signature';
+            }
 
             const phoneCell = document.createElement('td');
             phoneCell.textContent = phone;
@@ -218,10 +237,30 @@
             row.appendChild(phoneCell);
 
             tbody.appendChild(row);
+
+            for(let i = 0; i < 3; i++) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = '<td></td><td></td><td></td>';
+                tbody.appendChild(emptyRow);
+            }
+
             document.getElementById('pdfArea').style.display = 'block';
             document.getElementById('downloadBtn').style.display = 'inline-block';
         }
 
+        document.getElementById('signatureMode').addEventListener('change', function () {
+            const mode = this.value;
+            if (mode === 'draw') {
+                document.getElementById('signatureModeInfo').style.display = 'block';
+                canvas.style.display = 'block';
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            } else {
+                document.getElementById('signatureModeInfo').style.display = 'none';
+                canvas.style.display = 'none';
+            }
+        });
+        
         function downloadPDF() {
             const element = document.getElementById('pdfArea');
             const opt = {
