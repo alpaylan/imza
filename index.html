@@ -48,18 +48,22 @@
             background: white;
             padding: 1rem;
             box-sizing: border-box;
+            width: 794px;
+            height: 1123px;
+            overflow: hidden;
+            position: relative;
         }
 
         .document {
             padding: 1rem;
             text-align: center;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-        .pdfArea {
-            width: 794px;       /* A4 width at 96dpi */
-            height: 1123px;     /* A4 height at 96dpi */
-            overflow: hidden;
-            position: relative;
-        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -73,16 +77,16 @@
             text-align: left;
         }
 
-        td {
-            height: 15px;
-        }
-
-        p {
-            text-align: center;
-        }
-
         .signature {
             font-family: 'Pacifico', cursive;
+        }
+
+        #signatureCanvas {
+            width: 100%;
+            height: 150px;
+            border: 1px solid #ccc;
+            margin-top: 1rem;
+            touch-action: none;
         }
     </style>
 </head>
@@ -95,46 +99,103 @@
     <label>Telefon (İsteğe bağlı):
         <input type="text" id="phone" placeholder="Telefon numarası (opsiyonel)">
     </label>
+    <label>İmzanızı çizin:</label>
+    <canvas id="signatureCanvas"></canvas>
+    <button onclick="clearSignature()">İmzayı Temizle</button>
     <button onclick="generateDocument()">Belgeyi Oluştur</button>
     <button onclick="downloadPDF()" style="display:none" id="downloadBtn">PDF İndir</button>
 
     <div class="document-wrapper" id="pdfArea" style="display:none">
         <div class="document" id="output">
-            <p style="text-align: center">
-                Ben yüreği Cumhuriyetten, demokrasiden ve adaletten yana atan on milyonlarca vatanseverden
-                biriyim.<br><br>
-                Ben milli iradeyim!<br><br>
-                23 Mart’ta Cumhuriyet Halk Partisi’nin gerçekleştirdiği ön seçimde 15,5 milyon vatandaş Ekrem
-                İmamoğlu’nu Cumhurbaşkanı adayı olarak belirledi.<br><br>
-                Milyonların iradesiyle Cumhurbaşkanı Adayı olan Ekrem İmamoğlu hukuka, akla ve vicdana aykırı bir
-                şekilde siyasi bir kararla hapiste tutuluyor.<br><br>
-                Ülkemin gelecek güzel günlerine inanmaktan bir an olsun vazgeçmedim.<br><br>
-                Ekrem İmamoğlu’nun özgürlüğüne kavuşmasını; demokratik, adil ve mertçe bir yarışın olacağı seçim
-                sandığının bir an önce kurulmasını istiyorum.<br><br>
-                Bu adaletsiz ve hukuksuz düzen artık son bulsun istiyorum.<br><br>
-                Adayımı yanımda, sandığı önümde görmek için imza veriyorum.
-            </p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Ad - Soyad</th>
-                        <th>İmza</th>
-                        <th>Telefon (İsteğe bağlı)</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                </tbody>
-            </table>
-            <br><br><br><br><br><br><br><br>
+            <div>
+                <p style="text-align: center">
+                    Ben yüreği Cumhuriyetten, demokrasiden ve adaletten yana atan on milyonlarca vatanseverden
+                    biriyim.<br><br>
+                    Ben milli iradeyim!<br><br>
+                    23 Mart’ta Cumhuriyet Halk Partisi’nin gerçekleştirdiği ön seçimde 15,5 milyon vatandaş Ekrem
+                    İmamoğlu’nu Cumhurbaşkanı adayı olarak belirledi.<br><br>
+                    Milyonların iradesiyle Cumhurbaşkanı Adayı olan Ekrem İmamoğlu hukuka, akla ve vicdana aykırı bir
+                    şekilde siyasi bir kararla hapiste tutuluyor.<br><br>
+                    Ülkemin gelecek güzel günlerine inanmaktan bir an olsun vazgeçmedim.<br><br>
+                    Ekrem İmamoğlu’nun özgürlüğüne kavuşmasını; demokratik, adil ve mertçe bir yarışın olacağı seçim
+                    sandığının bir an önce kurulmasını istiyorum.<br><br>
+                    Bu adaletsiz ve hukuksuz düzen artık son bulsun istiyorum.<br><br>
+                    Adayımı yanımda, sandığı önümde görmek için imza veriyorum.
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ad - Soyad</th>
+                            <th>İmza</th>
+                            <th>Telefon (İsteğe bağlı)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('touchstart', start);
+        canvas.addEventListener('mouseup', end);
+        canvas.addEventListener('touchend', end);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('touchmove', draw);
+
+        function getXY(e) {
+            if (e.touches && e.touches.length > 0) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: e.touches[0].clientX - rect.left,
+                    y: e.touches[0].clientY - rect.top
+                };
+            } else {
+                return {
+                    x: e.offsetX,
+                    y: e.offsetY
+                };
+            }
+        }
+
+        function start(e) {
+            drawing = true;
+            const { x, y } = getXY(e);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function end() {
+            drawing = false;
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const { x, y } = getXY(e);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+
+        function clearSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
         function generateDocument() {
             const name = document.getElementById('fullName').value;
             const phone = document.getElementById('phone').value;
             const tbody = document.getElementById('tableBody');
+            const signatureDataURL = canvas.toDataURL();
 
             tbody.innerHTML = ''; // clear before filling
             const row = document.createElement('tr');
@@ -143,8 +204,11 @@
             nameCell.textContent = name;
 
             const signatureCell = document.createElement('td');
-            signatureCell.className = 'signature';
-            signatureCell.textContent = name;
+            const img = document.createElement('img');
+            img.src = signatureDataURL;
+            img.style.maxHeight = '60px';
+            img.style.maxWidth = '100%';
+            signatureCell.appendChild(img);
 
             const phoneCell = document.createElement('td');
             phoneCell.textContent = phone;
@@ -154,13 +218,6 @@
             row.appendChild(phoneCell);
 
             tbody.appendChild(row);
-
-            for (let i = 0; i < 3; i++) {
-                const emptyRow = document.createElement('tr');
-                emptyRow.innerHTML = '<td></td><td></td><td></td>';
-                tbody.appendChild(emptyRow);
-            }
-
             document.getElementById('pdfArea').style.display = 'block';
             document.getElementById('downloadBtn').style.display = 'inline-block';
         }
@@ -168,14 +225,13 @@
         function downloadPDF() {
             const element = document.getElementById('pdfArea');
             const opt = {
-                margin: 0.5,
+                margin: 0,
                 filename: 'imza-belgesi.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
             };
-            window.scrollTo(0, 0); // ensure top
-            window.
+            window.scrollTo(0, 0);
             html2pdf().set(opt).from(element).save();
         }
     </script>
